@@ -14,10 +14,34 @@ export interface SlugifyOptions {
 const SEPARATOR = "-";
 
 /**
- * A combining mark, for example the grave accent of "è" after NFD
+ * A combining mark, for example the grave accent of "è" after NFKD
  * normalization divides "è" into "e" and the mark.
  */
 const COMBINING_MARK = /\p{M}/gu;
+
+/**
+ * The ASCII letters of each lowercase Latin letter that has no
+ * decomposition to `a`-`z`, for example "ø" and "ß". With NFKD, this map
+ * brings each letter of Latin-1 Supplement and Latin Extended-A to `a`-`z`.
+ */
+const LETTER_FOLDS: ReadonlyMap<string, string> = new Map([
+  ["æ", "ae"],
+  ["ð", "d"],
+  ["ø", "o"],
+  ["þ", "th"],
+  ["ß", "ss"],
+  ["đ", "d"],
+  ["ħ", "h"],
+  ["ı", "i"],
+  ["ĸ", "q"],
+  ["ł", "l"],
+  ["ŋ", "n"],
+  ["œ", "oe"],
+  ["ŧ", "t"],
+]);
+
+/** One of the letters in {@link LETTER_FOLDS}. */
+const FOLDED_LETTER = new RegExp(`[${[...LETTER_FOLDS.keys()].join("")}]`, "gu");
 
 /** A run of one or more characters that a slug cannot contain. */
 const DISALLOWED_RUN = /[^a-z0-9]+/g;
@@ -30,17 +54,22 @@ const EDGE_SEPARATOR = new RegExp(`^${SEPARATOR}|${SEPARATOR}$`, "g");
  *
  * The steps are:
  *
- * 1. Remove the diacritics: "Crème" becomes "Creme".
+ * 1. Change each character to its compatibility form (NFKD), and remove
+ *    the diacritics: "Crème" becomes "Creme", "ﬁ" becomes "fi", and
+ *    "１" becomes "1".
  * 2. Make the text lowercase.
- * 3. Replace each run of characters that are not `a`-`z` or `0`-`9` with
+ * 3. Change each Latin letter that has no decomposition to its ASCII
+ *    letters: "ø" becomes "o", and "ß" becomes "ss".
+ * 4. Replace each run of characters that are not `a`-`z` or `0`-`9` with
  *    one hyphen.
- * 4. Remove a hyphen at the start and at the end.
- * 5. If `options.maxLength` is set, cut the slug to that length (see
+ * 5. Remove a hyphen at the start and at the end.
+ * 6. If `options.maxLength` is set, cut the slug to that length (see
  *    {@link SlugifyOptions.maxLength}).
  *
  * @example
  * slugify("Hello, World!"); // "hello-world"
  * slugify("Crème Brûlée"); // "creme-brulee"
+ * slugify("Łódź Straße"); // "lodz-strasse"
  * slugify("one two three", { maxLength: 9 }); // "one-two"
  *
  * @param text - The title.
@@ -50,9 +79,10 @@ const EDGE_SEPARATOR = new RegExp(`^${SEPARATOR}|${SEPARATOR}$`, "g");
  */
 export function slugify(text: string, options?: SlugifyOptions): string {
   const slug = text
-    .normalize("NFD")
+    .normalize("NFKD")
     .replace(COMBINING_MARK, "")
     .toLowerCase()
+    .replace(FOLDED_LETTER, (letter) => LETTER_FOLDS.get(letter) ?? letter)
     .replace(DISALLOWED_RUN, SEPARATOR)
     .replace(EDGE_SEPARATOR, "");
   const maxLength = options?.maxLength;
