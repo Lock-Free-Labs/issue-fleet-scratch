@@ -10,6 +10,12 @@ export const DURATION_UNITS = [
 /** The units that `formatDuration` uses: all units of the table except the last one (`ms`). */
 const FORMAT_UNITS = DURATION_UNITS.slice(0, -1);
 
+/** The smallest unit of the table (`ms`). */
+const SMALLEST_UNIT = DURATION_UNITS[DURATION_UNITS.length - 1];
+
+/** The smallest unit that `formatDuration` uses (`s`). Its text is the result for zero. */
+const SMALLEST_FORMAT_UNIT = FORMAT_UNITS[FORMAT_UNITS.length - 1];
+
 /** Match one part at the current position: digits, then letters. */
 const PART_PATTERN = /(\d+)([A-Za-z]*)/y;
 
@@ -108,17 +114,24 @@ export function parseDuration(text: string): number {
 /**
  * Format a number of milliseconds as text, such as `1h 30m`.
  *
- * The text holds the units `d`, `h`, `m`, and `s` from `DURATION_UNITS`,
- * largest first, with one space between them. A unit with a count of zero is
- * left out. The `ms` unit is not used: the part of the value under one second
- * is dropped. The result for zero and for a value under one second is not
- * defined yet, and neither is the result for a number that is not a safe
- * non-negative integer.
+ * For a value of one second or more, the text holds the units `d`, `h`, `m`,
+ * and `s` from `DURATION_UNITS`, largest first, with one space between them.
+ * A unit with a count of zero is left out. The part of the value under one
+ * second is dropped: the function truncates and does not round. Thus `1500`
+ * gives `1s`, and `59999` gives `59s`. Zero gives `0s`. A value from 1 to 999
+ * gives the `ms` unit only, such as `250ms`. The result for a number that is
+ * not a safe non-negative integer is not defined yet.
  *
  * @param ms - The duration in milliseconds.
  * @returns The duration text.
  */
 export function formatDuration(ms: number): string {
+  if (ms === 0) {
+    return `0${SMALLEST_FORMAT_UNIT.name}`;
+  }
+  if (ms > 0 && ms < SMALLEST_FORMAT_UNIT.factor) {
+    return `${ms}${SMALLEST_UNIT.name}`;
+  }
   const parts: string[] = [];
   let rest = ms;
   for (const { name, factor } of FORMAT_UNITS) {
