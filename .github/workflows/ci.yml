@@ -1,0 +1,22 @@
+name: ci
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node --test
+      - name: Fail in the merge queue on purpose
+        if: github.event_name == 'merge_group'
+        run: |
+          if [ -e FAIL_IN_MERGE_QUEUE ]; then
+            echo "The file FAIL_IN_MERGE_QUEUE exists. The merge queue must remove this pull request."
+            exit 1
+          fi
