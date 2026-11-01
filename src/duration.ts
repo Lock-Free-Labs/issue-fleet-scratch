@@ -7,34 +7,82 @@ export const DURATION_UNITS = [
   { name: "ms", factor: 1 },
 ] as const;
 
+/** Match one part at the current position: digits, then letters. */
+const PART_PATTERN = /(\d+)([A-Za-z]*)/y;
+
+/** Match zero or more spaces (U+0020) between two parts. */
+const SPACES_PATTERN = / */y;
+
 /**
- * Match one part: digits, then a unit. The `ms` alternative comes before `m`.
- * The first part starts at the text start. Each later part follows zero or more
- * spaces that come right after the unit of the part before.
+ * Make the error for a text that is not a valid duration.
+ *
+ * @param text - The text that the function refused.
+ * @param reason - A short reason that is true for the text.
+ * @returns A `SyntaxError` whose message names the text.
  */
-const PART_PATTERN = /(?:^|(?<=[dhms]) *)(\d+)(ms|[dhms])/y;
+function invalidDuration(text: string, reason: string): SyntaxError {
+  return new SyntaxError(`Invalid duration ${JSON.stringify(text)}: ${reason}`);
+}
 
 /**
  * Parse a duration text such as `1h30m` into milliseconds.
  *
- * Current behavior: the function reads the parts in order. Each part is
- * digits followed by one unit. One or more spaces (U+0020) can separate two
- * parts. A space before the first part, after the last part, or inside a part
- * is not a separator. The function stops at the first position where no part
- * matches and returns the sum so far.
+ * Grammar: `part ( spaces part )*`. A `spaces` item is zero or more spaces
+ * (U+0020). A `part` is one or more ASCII digits, directly followed by a unit
+ * name from `DURATION_UNITS`. The text holds at least one part. The units
+ * come in the table order `d`, `h`, `m`, `s`, `ms`, and each unit occurs at
+ * most one time. A space before the first part, after the last part, or
+ * inside a part is not accepted, and neither is a tab.
  *
  * @param text - The duration text.
  * @returns The duration in milliseconds.
+ * @throws {SyntaxError} If the text does not follow the grammar. The message
+ * names the text and gives the reason.
  */
 export function parseDuration(text: string): number {
-  const pattern = new RegExp(PART_PATTERN);
+  if (text === "") {
+    throw invalidDuration(text, "no duration");
+  }
+  const partPattern = new RegExp(PART_PATTERN);
+  const spacesPattern = new RegExp(SPACES_PATTERN);
   let total = 0;
-  for (let match = pattern.exec(text); match !== null; match = pattern.exec(text)) {
-    const unit = DURATION_UNITS.find((candidate) => candidate.name === match[2]);
-    if (unit === undefined) {
-      break;
+  let previousIndex = -1;
+  let position = 0;
+  while (position < text.length) {
+    partPattern.lastIndex = position;
+    const match = partPattern.exec(text);
+    if (match === null) {
+      throw invalidDuration(text, `unexpected character at position ${position}`);
     }
-    total += Number(match[1]) * unit.factor;
+    const [, digits, letters] = match;
+    if (letters === "") {
+      throw invalidDuration(text, "a number without a unit");
+    }
+    const index = DURATION_UNITS.findIndex((candidate) => candidate.name === letters);
+    if (index === -1) {
+      throw invalidDuration(text, `unknown unit ${JSON.stringify(letters)}`);
+    }
+    const unit = DURATION_UNITS[index];
+    if (index === previousIndex) {
+      throw invalidDuration(text, `the unit ${JSON.stringify(unit.name)} occurs two times`);
+    }
+    if (index < previousIndex) {
+      throw invalidDuration(
+        text,
+        `the unit ${JSON.stringify(unit.name)} comes after ${JSON.stringify(DURATION_UNITS[previousIndex].name)}`,
+      );
+    }
+    total += Number(digits) * unit.factor;
+    previousIndex = index;
+    position = partPattern.lastIndex;
+    spacesPattern.lastIndex = position;
+    spacesPattern.exec(text);
+    const next = spacesPattern.lastIndex;
+    if (next < text.length) {
+      position = next;
+    } else if (next > position) {
+      throw invalidDuration(text, `unexpected character at position ${position}`);
+    }
   }
   return total;
 }
