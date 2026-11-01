@@ -107,16 +107,18 @@ test("parseDuration(formatDuration(ms)) gives ms again for each whole second fro
   for (let second = 0; second <= LAST_SECOND; second += 1) {
     const ms = second * MS_PER_SECOND;
     const text = formatDuration(ms);
-    let result: number | string;
+    let outcome: string;
     try {
-      result = parseDuration(text);
+      const result = parseDuration(text);
+      if (result === ms) {
+        continue;
+      }
+      outcome = `gave ${result}`;
     } catch (error) {
-      result = `threw ${String(error)}`;
+      outcome = `threw ${String(error)}`;
     }
-    if (result !== ms) {
-      failure = `ms ${ms}: formatDuration gave ${JSON.stringify(text)}, parseDuration gave ${String(result)}`;
-      break;
-    }
+    failure = `ms ${ms}: formatDuration gave ${JSON.stringify(text)}, parseDuration ${outcome}`;
+    break;
   }
   assert.equal(failure, undefined, failure);
 });

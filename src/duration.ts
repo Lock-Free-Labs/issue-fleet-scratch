@@ -1,5 +1,5 @@
 /** Name and size in milliseconds of each duration unit, largest first. */
-export const DURATION_UNITS = [
+const DURATION_UNITS = [
   { name: "d", factor: 86_400_000 },
   { name: "h", factor: 3_600_000 },
   { name: "m", factor: 60_000 },
@@ -43,11 +43,11 @@ function invalidDuration(
  * Parse a duration text such as `1h30m` into milliseconds.
  *
  * Grammar: `part ( spaces part )*`. A `spaces` item is zero or more spaces
- * (U+0020). A `part` is one or more ASCII digits, directly followed by a unit
- * name from `DURATION_UNITS`. The text holds at least one part. The units
- * come in the table order `d`, `h`, `m`, `s`, `ms`, and each unit occurs at
- * most one time. A space before the first part, after the last part, or
- * inside a part is not accepted, and neither is a tab.
+ * (U+0020). A `part` is one or more ASCII digits, directly followed by one of
+ * the unit names `d`, `h`, `m`, `s`, and `ms`. The text holds at least one
+ * part. The units come in that order, and each unit occurs at most one time.
+ * A space before the first part, after the last part, or inside a part is not
+ * accepted, and neither is a tab.
  *
  * @param text - The duration text.
  * @returns The duration in milliseconds.
@@ -116,12 +116,12 @@ export function parseDuration(text: string): number {
  * Format a number of milliseconds as text, such as `1h 30m`.
  *
  * For a value of one second or more, the text holds the units `d`, `h`, `m`,
- * and `s` from `DURATION_UNITS`, largest first, with one space between them.
- * A unit with a count of zero is left out. The part of the value under one
- * second is dropped: the function truncates and does not round. Thus `1500`
- * gives `1s`, and `59999` gives `59s`. Zero gives `0s`. A value from 1 to 999
- * gives the `ms` unit only, such as `250ms`. The result for a number that is
- * not a safe non-negative integer is refused. `-0` is accepted and gives `0s`.
+ * and `s`, largest first, with one space between them. A unit with a count of
+ * zero is left out. The part of the value under one second is dropped: the
+ * function truncates and does not round. Thus `1500` gives `1s`, and `59999`
+ * gives `59s`. Zero gives `0s`. A value from 1 to 999 gives the `ms` unit
+ * only, such as `250ms`. The function refuses a number that is not a safe
+ * integer of zero or more. It accepts `-0` and gives `0s`.
  *
  * @param ms - The duration in milliseconds. It must follow
  * `Number.isSafeInteger(ms) && ms >= 0`.
@@ -140,7 +140,7 @@ export function formatDuration(ms: number): string {
   if (ms === 0) {
     return `0${SMALLEST_FORMAT_UNIT.name}`;
   }
-  if (ms > 0 && ms < SMALLEST_FORMAT_UNIT.factor) {
+  if (ms < SMALLEST_FORMAT_UNIT.factor) {
     return `${ms}${SMALLEST_UNIT.name}`;
   }
   const parts: string[] = [];
