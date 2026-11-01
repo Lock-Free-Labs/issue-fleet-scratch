@@ -7,6 +7,12 @@ export interface SlugifyOptions {
 /** The character that divides the words of a slug. */
 const SEPARATOR = "-";
 
+/**
+ * A combining mark, for example the grave accent of "è" after NFD
+ * normalization divides "è" into "e" and the mark.
+ */
+const COMBINING_MARK = /\p{M}/gu;
+
 /** A run of one or more characters that a slug cannot contain. */
 const DISALLOWED_RUN = /[^a-z0-9]+/g;
 
@@ -23,6 +29,8 @@ const EDGE_SEPARATOR = new RegExp(`^${SEPARATOR}|${SEPARATOR}$`, "g");
 export function slugify(text: string, options?: SlugifyOptions): string {
   void options;
   return text
+    .normalize("NFD")
+    .replace(COMBINING_MARK, "")
     .toLowerCase()
     .replace(DISALLOWED_RUN, SEPARATOR)
     .replace(EDGE_SEPARATOR, "");
