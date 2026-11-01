@@ -29,6 +29,9 @@ const OXFORD_SEPARATOR = ", and ";
  * @throws {RangeError} If the list is empty.
  */
 export function greetAll(names: string[]): string {
+  if (names.length === 0) {
+    throw new RangeError("greetAll needs at least one name.");
+  }
   if (names.length <= 2) {
     return greet(names.join(PAIR_SEPARATOR));
   }
