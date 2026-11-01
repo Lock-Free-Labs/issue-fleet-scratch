@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { parseDuration } from "./duration.ts";
+import { formatDuration, parseDuration } from "./duration.ts";
 
 test("parseDuration reads the units d, h, m, s, and ms in that order", () => {
   assert.equal(parseDuration("1h30m"), 5_400_000);
@@ -55,4 +55,13 @@ test("parseDuration refuses a value larger than Number.MAX_SAFE_INTEGER with a R
       `${name}: ${JSON.stringify(text.slice(0, 30))}`,
     );
   }
+});
+
+test("formatDuration gives the units d to s with a space between them and leaves out zero units", () => {
+  assert.equal(formatDuration(5_400_000), "1h 30m");
+  assert.equal(formatDuration(93_784_000), "1d 2h 3m 4s");
+  assert.equal(formatDuration(86_400_000), "1d");
+  assert.equal(formatDuration(90_000_000), "1d 1h");
+  assert.equal(formatDuration(3_601_000), "1h 1s");
+  assert.equal(formatDuration(1_000), "1s");
 });

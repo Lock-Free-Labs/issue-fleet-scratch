@@ -101,3 +101,15 @@ export function parseDuration(text: string): number {
   }
   return total;
 }
+
+/**
+ * Format a number of milliseconds as text. This is a stub: it gives an empty
+ * text for each value.
+ *
+ * @param ms - The duration in milliseconds.
+ * @returns The duration text.
+ */
+export function formatDuration(ms: number): string {
+  void ms;
+  return "";
+}
