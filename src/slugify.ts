@@ -20,9 +20,36 @@ const SEPARATOR = "-";
 const COMBINING_MARK = /\p{M}/gu;
 
 /**
+ * Make a function that replaces each character of a text that is a key of
+ * `replacements` with the value of that key. The other characters stay.
+ *
+ * @param replacements - A map from one character to the text that replaces it.
+ * @returns The function.
+ */
+function characterReplacer(
+  replacements: ReadonlyMap<string, string>,
+): (text: string) => string {
+  const pattern = new RegExp(`[${[...replacements.keys()].join("")}]`, "gu");
+  return (text) =>
+    text.replace(pattern, (character) => replacements.get(character) ?? character);
+}
+
+/**
+ * The characters whose compatibility form (NFKD) does not suit a slug, and
+ * the text that slugify writes in their place before NFKD. NFKD changes
+ * "ŀ" to "l·" and "ŉ" to "ʼn", and the "·" and the "ʼ" would split the word.
+ */
+const COMPATIBILITY_OVERRIDES: ReadonlyMap<string, string> = new Map([
+  ["Ŀ", "L"],
+  ["ŀ", "l"],
+  ["ŉ", "n"],
+]);
+
+/**
  * The ASCII letters of each lowercase Latin letter that has no
- * decomposition to `a`-`z`, for example "ø" and "ß". With NFKD, this map
- * brings each letter of Latin-1 Supplement and Latin Extended-A to `a`-`z`.
+ * decomposition to `a`-`z`, for example "ø" and "ß". With {@link COMPATIBILITY_OVERRIDES} and NFKD, this map
+ * brings each letter of Latin-1 Supplement and Latin Extended-A to `a`-`z`,
+ * also inside a word.
  */
 const LETTER_FOLDS: ReadonlyMap<string, string> = new Map([
   ["æ", "ae"],
@@ -40,11 +67,11 @@ const LETTER_FOLDS: ReadonlyMap<string, string> = new Map([
   ["ŧ", "t"],
 ]);
 
-/** One of the letters in {@link LETTER_FOLDS}. */
-const FOLDED_LETTER = new RegExp(
-  `[${[...LETTER_FOLDS.keys()].join("")}]`,
-  "gu",
-);
+/** Replace each character of {@link COMPATIBILITY_OVERRIDES}. */
+const replaceCompatibilityOverrides = characterReplacer(COMPATIBILITY_OVERRIDES);
+
+/** Replace each letter of {@link LETTER_FOLDS}. */
+const foldLetters = characterReplacer(LETTER_FOLDS);
 
 /** A run of one or more characters that a slug cannot contain. */
 const DISALLOWED_RUN = /[^a-z0-9]+/g;
@@ -57,16 +84,18 @@ const EDGE_SEPARATOR = new RegExp(`^${SEPARATOR}|${SEPARATOR}$`, "g");
  *
  * The steps are:
  *
- * 1. Change each character to its compatibility form (NFKD), and remove
+ * 1. Replace each character of {@link COMPATIBILITY_OVERRIDES}: "ŀ"
+ *    becomes "l".
+ * 2. Change each character to its compatibility form (NFKD), and remove
  *    the diacritics: "Crème" becomes "Creme", "ﬁ" becomes "fi", and
  *    "１" becomes "1".
- * 2. Make the text lowercase.
- * 3. Change each Latin letter that has no decomposition to its ASCII
+ * 3. Make the text lowercase.
+ * 4. Change each Latin letter that has no decomposition to its ASCII
  *    letters: "ø" becomes "o", and "ß" becomes "ss".
- * 4. Replace each run of characters that are not `a`-`z` or `0`-`9` with
+ * 5. Replace each run of characters that are not `a`-`z` or `0`-`9` with
  *    one hyphen.
- * 5. Remove a hyphen at the start and at the end.
- * 6. If `options.maxLength` is set, cut the slug to that length (see
+ * 6. Remove a hyphen at the start and at the end.
+ * 7. If `options.maxLength` is set, cut the slug to that length (see
  *    {@link SlugifyOptions.maxLength}).
  *
  * @example
@@ -81,13 +110,13 @@ const EDGE_SEPARATOR = new RegExp(`^${SEPARATOR}|${SEPARATOR}$`, "g");
  * @throws {RangeError} If `options.maxLength` is negative or `NaN`.
  */
 export function slugify(text: string, options?: SlugifyOptions): string {
-  const slug = text
-    .normalize("NFKD")
-    .replace(COMBINING_MARK, "")
-    .toLowerCase()
-    .replace(FOLDED_LETTER, (letter) => LETTER_FOLDS.get(letter) ?? letter)
-    .replace(DISALLOWED_RUN, SEPARATOR)
-    .replace(EDGE_SEPARATOR, "");
+  const folded = foldLetters(
+    replaceCompatibilityOverrides(text)
+      .normalize("NFKD")
+      .replace(COMBINING_MARK, "")
+      .toLowerCase(),
+  );
+  const slug = folded.replace(DISALLOWED_RUN, SEPARATOR).replace(EDGE_SEPARATOR, "");
   const maxLength = options?.maxLength;
   return maxLength === undefined ? slug : truncate(slug, maxLength);
 }
