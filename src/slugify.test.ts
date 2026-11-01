@@ -3,6 +3,27 @@ import { test } from "node:test";
 
 import { slugify } from "./slugify.ts";
 
+/** The Unicode blocks whose Latin letters slugify changes to `a`-`z`. */
+const LATIN_BLOCKS: ReadonlyArray<
+  readonly [name: string, first: number, last: number]
+> = [
+  ["Latin-1 Supplement", 0x0080, 0x00ff],
+  ["Latin Extended-A", 0x0100, 0x017f],
+  ["Latin Extended-B", 0x0180, 0x024f],
+  ["Latin Extended Additional", 0x1e00, 0x1eff],
+];
+
+/**
+ * The letters of {@link LATIN_BLOCKS} that are not drawn from a letter: the
+ * tone letters, the clicks and the glottal stops. They have no base letter
+ * in `a`-`z`, thus slugify replaces them with a hyphen, the same as a
+ * punctuation mark.
+ */
+const LETTERS_WITH_NO_BASE_LETTER: ReadonlySet<number> = new Set([
+  0x0184, 0x0185, 0x01a7, 0x01a8, 0x01bb, 0x01bc, 0x01bd, 0x01be, 0x01c0,
+  0x01c1, 0x01c2, 0x01c3, 0x0241, 0x0242,
+]);
+
 test("slugify makes the text lowercase and replaces each run of other characters with one hyphen", () => {
   assert.equal(slugify("Hello, World!"), "hello-world");
   assert.equal(slugify("Hello World"), "hello-world");
@@ -41,17 +62,32 @@ test("slugify changes a Latin letter that has no decomposition to its base lette
   assert.equal(slugify("STRAẞE"), "strasse");
 });
 
-test("slugify changes each letter of Latin-1 Supplement and Latin Extended-A to a-z, also inside a word", () => {
+test("slugify changes a letter of Latin Extended-B and its lowercase letter to its base letter", () => {
+  assert.equal(slugify("Azərbaycan"), "azerbaycan");
+  assert.equal(slugify("ƏLİYEV"), "eliyev");
+  assert.equal(slugify("Ƒunction"), "function");
+  assert.equal(slugify("Eʋegbe"), "evegbe");
+  assert.equal(slugify("Ɔkɔm"), "okom");
+  assert.equal(slugify("Ɓaƙi Ɗan"), "baki-dan");
+});
+
+test("slugify changes each Latin letter of the Latin blocks to a-z, also inside a word", () => {
   const failures: string[] = [];
-  for (let codePoint = 0x00c0; codePoint <= 0x017f; codePoint += 1) {
-    const letter = String.fromCodePoint(codePoint);
-    if (!/\p{L}/u.test(letter)) {
-      continue;
-    }
-    // A letter alone hides a separator: step 6 removes it at the edges.
-    const slug = slugify(`a${letter}a`);
-    if (!/^a[a-z]+a$/.test(slug)) {
-      failures.push(`U+${codePoint.toString(16).toUpperCase()} ${letter} -> ${slug}`);
+  for (const [block, first, last] of LATIN_BLOCKS) {
+    for (let codePoint = first; codePoint <= last; codePoint += 1) {
+      const letter = String.fromCodePoint(codePoint);
+      if (!/\p{Script=Latin}/u.test(letter)) {
+        continue;
+      }
+      // A letter alone hides a separator: step 6 removes it at the edges.
+      const slug = slugify(`a${letter}a`);
+      const expected = LETTERS_WITH_NO_BASE_LETTER.has(codePoint)
+        ? /^a-a$/
+        : /^a[a-z]+a$/;
+      if (!expected.test(slug)) {
+        const name = `U+${codePoint.toString(16).toUpperCase()} ${letter}`;
+        failures.push(`${block}: ${name} -> ${slug}`);
+      }
     }
   }
   assert.deepEqual(failures, []);
