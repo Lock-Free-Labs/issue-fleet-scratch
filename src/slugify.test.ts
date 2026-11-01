@@ -19,3 +19,11 @@ test("slugify removes a hyphen at the start and at the end", () => {
   assert.equal(slugify("!!!"), "");
   assert.equal(slugify(""), "");
 });
+
+test("slugify removes diacritics before it replaces the other characters", () => {
+  assert.equal(slugify("Crème Brûlée"), "creme-brulee");
+  assert.equal(slugify("Ångström"), "angstrom");
+  assert.equal(slugify("Ñandú São Paulo"), "nandu-sao-paulo");
+  // The same text in decomposed form: a base letter and a combining mark.
+  assert.equal(slugify("Crème"), "creme");
+});
