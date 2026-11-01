@@ -42,3 +42,11 @@ test("slugify with maxLength cuts the slug at a hyphen and never ends with a hyp
   assert.equal(slugify("Supercalifragilistic word", { maxLength: 5 }), "super");
   assert.equal(slugify("one two three", { maxLength: 0 }), "");
 });
+
+test("slugify throws a RangeError when maxLength is negative or NaN", () => {
+  for (const maxLength of [-1, -0.5, Number.NaN, Number.NEGATIVE_INFINITY]) {
+    assert.throws(() => slugify("one two three", { maxLength }), RangeError, `maxLength ${maxLength}`);
+  }
+  // Infinity is a valid limit: the slug is never cut.
+  assert.equal(slugify("one two three", { maxLength: Number.POSITIVE_INFINITY }), "one-two-three");
+});
