@@ -65,3 +65,13 @@ test("formatDuration gives the units d to s with a space between them and leaves
   assert.equal(formatDuration(3_601_000), "1h 1s");
   assert.equal(formatDuration(1_000), "1s");
 });
+
+test("formatDuration gives 0s for zero and ms only for a value under one second", () => {
+  assert.equal(formatDuration(0), "0s");
+  assert.equal(formatDuration(250), "250ms");
+  assert.equal(formatDuration(1), "1ms");
+  assert.equal(formatDuration(999), "999ms");
+  assert.equal(formatDuration(1_500), "1s");
+  assert.equal(formatDuration(59_999), "59s");
+  assert.equal(formatDuration(3_600_999), "1h");
+});
