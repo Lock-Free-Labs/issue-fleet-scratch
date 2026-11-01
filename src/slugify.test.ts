@@ -4,9 +4,18 @@ import { test } from "node:test";
 import { slugify } from "./slugify.ts";
 
 test("slugify makes the text lowercase and replaces each run of other characters with one hyphen", () => {
+  assert.equal(slugify("Hello, World!"), "hello-world");
   assert.equal(slugify("Hello World"), "hello-world");
   assert.equal(slugify("Top 10 Tips"), "top-10-tips");
   assert.equal(slugify("rock  &&  roll"), "rock-roll");
   assert.equal(slugify("snake_case_name"), "snake-case-name");
   assert.equal(slugify("ABC123"), "abc123");
+});
+
+test("slugify removes a hyphen at the start and at the end", () => {
+  assert.equal(slugify("  --Hi--  "), "hi");
+  assert.equal(slugify("(draft) notes"), "draft-notes");
+  assert.equal(slugify("Why?"), "why");
+  assert.equal(slugify("!!!"), "");
+  assert.equal(slugify(""), "");
 });
