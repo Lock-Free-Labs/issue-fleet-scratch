@@ -19,3 +19,11 @@ test("a size of one kilobyte or more has one decimal and a unit", () => {
   assert.equal(formatBytes(1024 ** 8), "1.0 YB");
   assert.equal(formatBytes(1024 ** 9), "1024.0 YB");
 });
+
+test("a size that rounds up to 1024 of a unit moves to the next unit", () => {
+  assert.equal(formatBytes(1023.4), "1023 B");
+  assert.equal(formatBytes(1023.5), "1.0 KB");
+  assert.equal(formatBytes(1048524), "1023.9 KB");
+  assert.equal(formatBytes(1048525), "1.0 MB");
+  assert.equal(formatBytes(1048575), "1.0 MB");
+});
