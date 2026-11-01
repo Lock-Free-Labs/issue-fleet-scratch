@@ -18,10 +18,15 @@ const SPACES_PATTERN = / */y;
  *
  * @param text - The text that the function refused.
  * @param reason - A short reason that is true for the text.
- * @returns A `SyntaxError` whose message names the text.
+ * @param ErrorType - The error class to make. The default is `SyntaxError`.
+ * @returns An error of type `ErrorType` whose message names the text.
  */
-function invalidDuration(text: string, reason: string): SyntaxError {
-  return new SyntaxError(`Invalid duration ${JSON.stringify(text)}: ${reason}`);
+function invalidDuration<E extends Error = SyntaxError>(
+  text: string,
+  reason: string,
+  ErrorType: new (message: string) => E = SyntaxError as new (message: string) => E,
+): E {
+  return new ErrorType(`Invalid duration ${JSON.stringify(text)}: ${reason}`);
 }
 
 /**
@@ -38,6 +43,9 @@ function invalidDuration(text: string, reason: string): SyntaxError {
  * @returns The duration in milliseconds.
  * @throws {SyntaxError} If the text does not follow the grammar. The message
  * names the text and gives the reason.
+ * @throws {RangeError} If the text follows the grammar, but the sum is more
+ * than `Number.MAX_SAFE_INTEGER` milliseconds. A `SyntaxError` has priority
+ * over a `RangeError`.
  */
 export function parseDuration(text: string): number {
   if (text === "") {
@@ -83,6 +91,13 @@ export function parseDuration(text: string): number {
     } else if (next > position) {
       throw invalidDuration(text, `unexpected character at position ${position}`);
     }
+  }
+  if (!Number.isSafeInteger(total)) {
+    throw invalidDuration(
+      text,
+      "the value is more than Number.MAX_SAFE_INTEGER milliseconds",
+      RangeError,
+    );
   }
   return total;
 }
