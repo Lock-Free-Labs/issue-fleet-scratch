@@ -10,3 +10,9 @@ test("parseDuration reads the units d, h, m, s, and ms in that order", () => {
   assert.equal(parseDuration("2d"), 172_800_000);
   assert.equal(parseDuration("0s"), 0);
 });
+
+test("parseDuration accepts spaces between the parts", () => {
+  assert.equal(parseDuration("1h 30m"), 5_400_000);
+  assert.equal(parseDuration("1d 2h 3m 4s 5ms"), 93_784_005);
+  assert.equal(parseDuration("1h   30m"), 5_400_000);
+});
