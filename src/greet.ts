@@ -20,5 +20,5 @@ export function greet(name: string): string {
  * @throws {RangeError} If the list is empty.
  */
 export function greetAll(names: string[]): string {
-  return "";
+  return greet(names[0]);
 }
