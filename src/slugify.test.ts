@@ -70,6 +70,20 @@ test("slugify changes a compatibility form to its usual letters and digits", () 
   assert.equal(slugify("Ｈｅｌｌｏ"), "hello");
 });
 
+test("slugify replaces a trademark sign with a hyphen, the same as ® and ©", () => {
+  assert.equal(slugify("Acme™ Widget"), "acme-widget");
+  assert.equal(slugify("Acme™Widget"), "acme-widget");
+  assert.equal(slugify("Acme℠ Widget"), "acme-widget");
+  // The raised MC, MD and MR signs are the trademark signs of French.
+  assert.equal(slugify("Acme\u{1F16A} Widget"), "acme-widget");
+  assert.equal(slugify("Acme\u{1F16B} Widget"), "acme-widget");
+  assert.equal(slugify("Acme\u{1F16C} Widget"), "acme-widget");
+  assert.equal(slugify("Acme® Widget"), "acme-widget");
+  assert.equal(slugify("Acme©Widget"), "acme-widget");
+  // NFKD still changes a unit sign to its letters.
+  assert.equal(slugify("5 ㎏ bag"), "5-kg-bag");
+});
+
 test("slugify with maxLength cuts the slug at a hyphen and never ends with a hyphen", () => {
   assert.equal(slugify("one two three", { maxLength: 9 }), "one-two");
   // The cut falls exactly before a hyphen.
