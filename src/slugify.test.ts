@@ -41,15 +41,27 @@ test("slugify changes a Latin letter that has no decomposition to its base lette
   assert.equal(slugify("STRAẞE"), "strasse");
 });
 
-test("slugify changes each letter of Latin-1 Supplement and Latin Extended-A to a-z", () => {
+test("slugify changes each letter of Latin-1 Supplement and Latin Extended-A to a-z, also inside a word", () => {
+  const failures: string[] = [];
   for (let codePoint = 0x00c0; codePoint <= 0x017f; codePoint += 1) {
     const letter = String.fromCodePoint(codePoint);
     if (!/\p{L}/u.test(letter)) {
       continue;
     }
-    const name = `U+${codePoint.toString(16).toUpperCase()} ${letter}`;
-    assert.match(slugify(letter), /^[a-z]+$/, name);
+    // A letter alone hides a separator: step 6 removes it at the edges.
+    const slug = slugify(`a${letter}a`);
+    if (!/^a[a-z]+a$/.test(slug)) {
+      failures.push(`U+${codePoint.toString(16).toUpperCase()} ${letter} -> ${slug}`);
+    }
   }
+  assert.deepEqual(failures, []);
+});
+
+test("slugify keeps a letter whose compatibility form holds a punctuation mark inside its word", () => {
+  // NFKD changes "ŀ" to "l·" and "ŉ" to "ʼn".
+  assert.equal(slugify("Coŀlecció"), "colleccio");
+  assert.equal(slugify("COĿLECCIÓ"), "colleccio");
+  assert.equal(slugify("Wat is ŉ boek"), "wat-is-n-boek");
 });
 
 test("slugify changes a compatibility form to its usual letters and digits", () => {
