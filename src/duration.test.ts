@@ -75,3 +75,27 @@ test("formatDuration gives 0s for zero and ms only for a value under one second"
   assert.equal(formatDuration(59_999), "59s");
   assert.equal(formatDuration(3_600_999), "1h");
 });
+
+test("formatDuration refuses a negative number or a number that is not a finite safe integer with a RangeError", () => {
+  const cases: Record<string, number> = {
+    "a negative integer": -1,
+    "a negative multiple of one second": -1_000,
+    "negative infinity": -Infinity,
+    "positive infinity": Infinity,
+    "not a number": NaN,
+    "a fraction above one": 1.5,
+    "a fraction under one": 0.1,
+    "a negative fraction": -0.5,
+    "the first integer that is not safe": 2 ** 53,
+    "a huge number": 1e300,
+  };
+  for (const [name, value] of Object.entries(cases)) {
+    assert.throws(
+      () => formatDuration(value),
+      (error) => error instanceof RangeError && error.message.includes(String(value)),
+      `${name}: ${String(value)}`,
+    );
+  }
+  assert.equal(formatDuration(Number.MAX_SAFE_INTEGER), "104249991d 8h 59m");
+  assert.equal(formatDuration(-0), "0s");
+});
