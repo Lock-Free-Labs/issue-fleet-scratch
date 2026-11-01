@@ -8,6 +8,9 @@ export function greet(name: string): string {
   return `Hello, ${name}!`;
 }
 
+/** The text that joins the two names of a pair. */
+const PAIR_SEPARATOR = " and ";
+
 /**
  * Make one greeting for a list of people.
  *
@@ -20,5 +23,5 @@ export function greet(name: string): string {
  * @throws {RangeError} If the list is empty.
  */
 export function greetAll(names: string[]): string {
-  return greet(names[0]);
+  return greet(names.join(PAIR_SEPARATOR));
 }
