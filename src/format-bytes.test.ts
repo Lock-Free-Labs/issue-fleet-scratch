@@ -27,3 +27,16 @@ test("a size that rounds up to 1024 of a unit moves to the next unit", () => {
   assert.equal(formatBytes(1048525), "1.0 MB");
   assert.equal(formatBytes(1048575), "1.0 MB");
 });
+
+test("a negative or non-finite size causes a RangeError", () => {
+  for (const value of [-1, -0.5, NaN, Infinity, -Infinity]) {
+    assert.throws(
+      () => formatBytes(value),
+      (error: unknown) =>
+        error instanceof RangeError && error.message.includes(String(value)),
+      `formatBytes(${value}) did not throw a RangeError that names the value`,
+    );
+  }
+  // Minus zero is not negative, so it is not refused.
+  assert.equal(formatBytes(-0), "0 B");
+});
