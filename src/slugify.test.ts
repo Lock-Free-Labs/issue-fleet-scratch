@@ -27,3 +27,18 @@ test("slugify removes diacritics before it replaces the other characters", () =>
   // The same text in decomposed form: a base letter and a combining mark.
   assert.equal(slugify("Crème"), "creme");
 });
+
+test("slugify with maxLength cuts the slug at a hyphen and never ends with a hyphen", () => {
+  assert.equal(slugify("one two three", { maxLength: 9 }), "one-two");
+  // The cut falls exactly before a hyphen.
+  assert.equal(slugify("one two three", { maxLength: 7 }), "one-two");
+  // The cut falls exactly after a hyphen.
+  assert.equal(slugify("one two three", { maxLength: 8 }), "one-two");
+  // The slug is not longer than maxLength, thus slugify does not cut it.
+  assert.equal(slugify("one two three", { maxLength: 13 }), "one-two-three");
+  assert.equal(slugify("one two three", { maxLength: 50 }), "one-two-three");
+  // A first word that is longer than maxLength is cut at maxLength.
+  assert.equal(slugify("one two three", { maxLength: 2 }), "on");
+  assert.equal(slugify("Supercalifragilistic word", { maxLength: 5 }), "super");
+  assert.equal(slugify("one two three", { maxLength: 0 }), "");
+});
