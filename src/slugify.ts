@@ -36,13 +36,23 @@ function characterReplacer(
 
 /**
  * The characters whose compatibility form (NFKD) does not suit a slug, and
- * the text that slugify writes in their place before NFKD. NFKD changes
- * "ŀ" to "l·" and "ŉ" to "ʼn", and the "·" and the "ʼ" would split the word.
+ * the text that slugify writes in their place before NFKD.
+ *
+ * - NFKD changes "ŀ" to "l·" and "ŉ" to "ʼn", and the "·" and the "ʼ" would
+ *   split the word. These letters become their base letter.
+ * - NFKD changes a trademark sign to letters, for example "™" to "TM", and
+ *   they would join the word before the sign. A trademark sign becomes a
+ *   separator, the same as "®" and "©", which have no compatibility form.
  */
 const COMPATIBILITY_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["Ŀ", "L"],
   ["ŀ", "l"],
   ["ŉ", "n"],
+  ["™", SEPARATOR],
+  ["℠", SEPARATOR],
+  ["\u{1F16A}", SEPARATOR],
+  ["\u{1F16B}", SEPARATOR],
+  ["\u{1F16C}", SEPARATOR],
 ]);
 
 /**
@@ -85,7 +95,7 @@ const EDGE_SEPARATOR = new RegExp(`^${SEPARATOR}|${SEPARATOR}$`, "g");
  * The steps are:
  *
  * 1. Replace each character of {@link COMPATIBILITY_OVERRIDES}: "ŀ"
- *    becomes "l".
+ *    becomes "l", and "™" becomes a hyphen.
  * 2. Change each character to its compatibility form (NFKD), and remove
  *    the diacritics: "Crème" becomes "Creme", "ﬁ" becomes "fi", and
  *    "１" becomes "1".
