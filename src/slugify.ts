@@ -5,6 +5,7 @@ export interface SlugifyOptions {
    * at a hyphen, thus it keeps only full words and does not end with a
    * hyphen. If the first word is longer than `maxLength`, the cut is at
    * `maxLength`. If this option is not set, the length has no limit.
+   * It must be 0 or more. `Infinity` is permitted and sets no limit.
    */
   maxLength?: number;
 }
@@ -45,6 +46,7 @@ const EDGE_SEPARATOR = new RegExp(`^${SEPARATOR}|${SEPARATOR}$`, "g");
  * @param text - The title.
  * @param options - The options. See {@link SlugifyOptions}.
  * @returns The slug. It is empty when the text has no letter or digit.
+ * @throws {RangeError} If `options.maxLength` is negative or `NaN`.
  */
 export function slugify(text: string, options?: SlugifyOptions): string {
   const slug = text
@@ -68,8 +70,12 @@ export function slugify(text: string, options?: SlugifyOptions): string {
  *   no two separators side by side.
  * @param maxLength - The maximum length of the result.
  * @returns The slug, or its start.
+ * @throws {RangeError} If `maxLength` is negative or `NaN`.
  */
 function truncate(slug: string, maxLength: number): string {
+  if (Number.isNaN(maxLength) || maxLength < 0) {
+    throw new RangeError(`maxLength must be 0 or more, but it is ${maxLength}.`);
+  }
   if (slug.length <= maxLength) {
     return slug;
   }
