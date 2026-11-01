@@ -15,3 +15,9 @@ test("greetAll with two names joins them with and, in the order of the list", ()
   assert.equal(greetAll(["Ann", "Bob"]), "Hello, Ann and Bob!");
   assert.equal(greetAll(["Bob", "Ann"]), "Hello, Bob and Ann!");
 });
+
+test("greetAll with three or more names uses an Oxford comma, in the order of the list", () => {
+  assert.equal(greetAll(["Ann", "Bob", "Cy"]), "Hello, Ann, Bob, and Cy!");
+  assert.equal(greetAll(["Cy", "Ann", "Bob"]), "Hello, Cy, Ann, and Bob!");
+  assert.equal(greetAll(["Ann", "Bob", "Cy", "Dee"]), "Hello, Ann, Bob, Cy, and Dee!");
+});
