@@ -4,6 +4,12 @@ export interface SlugifyOptions {
   maxLength?: number;
 }
 
+/** The character that divides the words of a slug. */
+const SEPARATOR = "-";
+
+/** A run of one or more characters that a slug cannot contain. */
+const DISALLOWED_RUN = /[^a-z0-9]+/g;
+
 /**
  * Make a URL slug from a title.
  *
@@ -13,5 +19,5 @@ export interface SlugifyOptions {
  */
 export function slugify(text: string, options?: SlugifyOptions): string {
   void options;
-  return text;
+  return text.toLowerCase().replace(DISALLOWED_RUN, SEPARATOR);
 }
