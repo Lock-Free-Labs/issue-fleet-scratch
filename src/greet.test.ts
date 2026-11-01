@@ -21,3 +21,7 @@ test("greetAll with three or more names uses an Oxford comma, in the order of th
   assert.equal(greetAll(["Cy", "Ann", "Bob"]), "Hello, Cy, Ann, and Bob!");
   assert.equal(greetAll(["Ann", "Bob", "Cy", "Dee"]), "Hello, Ann, Bob, Cy, and Dee!");
 });
+
+test("greetAll with an empty list throws a RangeError", () => {
+  assert.throws(() => greetAll([]), RangeError);
+});
