@@ -10,6 +10,9 @@ const SEPARATOR = "-";
 /** A run of one or more characters that a slug cannot contain. */
 const DISALLOWED_RUN = /[^a-z0-9]+/g;
 
+/** A separator at the start or at the end of a slug. */
+const EDGE_SEPARATOR = new RegExp(`^${SEPARATOR}|${SEPARATOR}$`, "g");
+
 /**
  * Make a URL slug from a title.
  *
@@ -19,5 +22,8 @@ const DISALLOWED_RUN = /[^a-z0-9]+/g;
  */
 export function slugify(text: string, options?: SlugifyOptions): string {
   void options;
-  return text.toLowerCase().replace(DISALLOWED_RUN, SEPARATOR);
+  return text
+    .toLowerCase()
+    .replace(DISALLOWED_RUN, SEPARATOR)
+    .replace(EDGE_SEPARATOR, "");
 }
