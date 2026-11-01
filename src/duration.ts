@@ -24,11 +24,11 @@ const SPACES_PATTERN = / */y;
  * @param ErrorType - The error class to make. The default is `SyntaxError`.
  * @returns An error of type `ErrorType` whose message names the text.
  */
-function invalidDuration<E extends Error = SyntaxError>(
+function invalidDuration(
   text: string,
   reason: string,
-  ErrorType: new (message: string) => E = SyntaxError as new (message: string) => E,
-): E {
+  ErrorType: new (message: string) => Error = SyntaxError,
+): Error {
   return new ErrorType(`Invalid duration ${JSON.stringify(text)}: ${reason}`);
 }
 
