@@ -7,6 +7,9 @@ export const DURATION_UNITS = [
   { name: "ms", factor: 1 },
 ] as const;
 
+/** The units that `formatDuration` uses: all units of the table except the last one (`ms`). */
+const FORMAT_UNITS = DURATION_UNITS.slice(0, -1);
+
 /** Match one part at the current position: digits, then letters. */
 const PART_PATTERN = /(\d+)([A-Za-z]*)/y;
 
@@ -103,13 +106,28 @@ export function parseDuration(text: string): number {
 }
 
 /**
- * Format a number of milliseconds as text. This is a stub: it gives an empty
- * text for each value.
+ * Format a number of milliseconds as text, such as `1h 30m`.
+ *
+ * The text holds the units `d`, `h`, `m`, and `s` from `DURATION_UNITS`,
+ * largest first, with one space between them. A unit with a count of zero is
+ * left out. The `ms` unit is not used: the part of the value under one second
+ * is dropped. The result for zero and for a value under one second is not
+ * defined yet, and neither is the result for a number that is not a safe
+ * non-negative integer.
  *
  * @param ms - The duration in milliseconds.
  * @returns The duration text.
  */
 export function formatDuration(ms: number): string {
-  void ms;
-  return "";
+  const parts: string[] = [];
+  let rest = ms;
+  for (const { name, factor } of FORMAT_UNITS) {
+    const remainder = rest % factor;
+    const count = (rest - remainder) / factor;
+    if (count > 0) {
+      parts.push(`${count}${name}`);
+    }
+    rest = remainder;
+  }
+  return parts.join(" ");
 }
