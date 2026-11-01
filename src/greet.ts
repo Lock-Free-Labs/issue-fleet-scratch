@@ -28,7 +28,7 @@ const OXFORD_SEPARATOR = ", and ";
  * @returns The greeting text.
  * @throws {RangeError} If the list is empty.
  */
-export function greetAll(names: string[]): string {
+export function greetAll(names: readonly string[]): string {
   if (names.length === 0) {
     throw new RangeError("greetAll needs at least one name.");
   }
