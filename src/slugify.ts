@@ -31,7 +31,10 @@ function characterReplacer(
 ): (text: string) => string {
   const pattern = new RegExp(`[${[...replacements.keys()].join("")}]`, "gu");
   return (text) =>
-    text.replace(pattern, (character) => replacements.get(character) ?? character);
+    text.replace(
+      pattern,
+      (character) => replacements.get(character) ?? character,
+    );
 }
 
 /**
@@ -155,7 +158,9 @@ const LETTER_FOLDS: ReadonlyMap<string, string> = new Map([
 ]);
 
 /** Replace each character of {@link COMPATIBILITY_OVERRIDES}. */
-const replaceCompatibilityOverrides = characterReplacer(COMPATIBILITY_OVERRIDES);
+const replaceCompatibilityOverrides = characterReplacer(
+  COMPATIBILITY_OVERRIDES,
+);
 
 /** Replace each letter of {@link LETTER_FOLDS}. */
 const foldLetters = characterReplacer(LETTER_FOLDS);
@@ -203,7 +208,9 @@ export function slugify(text: string, options?: SlugifyOptions): string {
       .replace(COMBINING_MARK, "")
       .toLowerCase(),
   );
-  const slug = folded.replace(DISALLOWED_RUN, SEPARATOR).replace(EDGE_SEPARATOR, "");
+  const slug = folded
+    .replace(DISALLOWED_RUN, SEPARATOR)
+    .replace(EDGE_SEPARATOR, "");
   const maxLength = options?.maxLength;
   return maxLength === undefined ? slug : truncate(slug, maxLength);
 }
