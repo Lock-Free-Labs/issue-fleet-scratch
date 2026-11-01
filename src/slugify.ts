@@ -41,7 +41,10 @@ const LETTER_FOLDS: ReadonlyMap<string, string> = new Map([
 ]);
 
 /** One of the letters in {@link LETTER_FOLDS}. */
-const FOLDED_LETTER = new RegExp(`[${[...LETTER_FOLDS.keys()].join("")}]`, "gu");
+const FOLDED_LETTER = new RegExp(
+  `[${[...LETTER_FOLDS.keys()].join("")}]`,
+  "gu",
+);
 
 /** A run of one or more characters that a slug cannot contain. */
 const DISALLOWED_RUN = /[^a-z0-9]+/g;
