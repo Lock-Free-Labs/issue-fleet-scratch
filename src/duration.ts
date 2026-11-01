@@ -7,14 +7,20 @@ export const DURATION_UNITS = [
   { name: "ms", factor: 1 },
 ] as const;
 
-/** Match one part: digits, then a unit. The `ms` alternative comes before `m`. */
-const PART_PATTERN = /(\d+)(ms|[dhms])/y;
+/**
+ * Match one part: digits, then a unit. The `ms` alternative comes before `m`.
+ * The first part starts at the text start. Each later part follows zero or more
+ * spaces that come right after the unit of the part before.
+ */
+const PART_PATTERN = /(?:^|(?<=[dhms]) *)(\d+)(ms|[dhms])/y;
 
 /**
  * Parse a duration text such as `1h30m` into milliseconds.
  *
  * Current behavior: the function reads the parts in order. Each part is
- * digits followed by one unit. It stops at the first position where no part
+ * digits followed by one unit. One or more spaces (U+0020) can separate two
+ * parts. A space before the first part, after the last part, or inside a part
+ * is not a separator. The function stops at the first position where no part
  * matches and returns the sum so far.
  *
  * @param text - The duration text.
