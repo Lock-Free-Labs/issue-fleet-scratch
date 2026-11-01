@@ -28,6 +28,36 @@ test("slugify removes diacritics before it replaces the other characters", () =>
   assert.equal(slugify("Crème"), "creme");
 });
 
+test("slugify changes a Latin letter that has no decomposition to its base letters", () => {
+  assert.equal(slugify("Øresund"), "oresund");
+  assert.equal(slugify("Łódź Straße"), "lodz-strasse");
+  assert.equal(slugify("Ærø"), "aero");
+  assert.equal(slugify("Đorđe"), "dorde");
+  assert.equal(slugify("Œuvre"), "oeuvre");
+  assert.equal(slugify("Þór"), "thor");
+  assert.equal(slugify("Kırıkkale"), "kirikkale");
+  assert.equal(slugify("Ħamrun"), "hamrun");
+  // The capital sharp s becomes "ß" in lowercase.
+  assert.equal(slugify("STRAẞE"), "strasse");
+});
+
+test("slugify changes each letter of Latin-1 Supplement and Latin Extended-A to a-z", () => {
+  for (let codePoint = 0x00c0; codePoint <= 0x017f; codePoint += 1) {
+    const letter = String.fromCodePoint(codePoint);
+    if (!/\p{L}/u.test(letter)) {
+      continue;
+    }
+    const name = `U+${codePoint.toString(16).toUpperCase()} ${letter}`;
+    assert.match(slugify(letter), /^[a-z]+$/, name);
+  }
+});
+
+test("slugify changes a compatibility form to its usual letters and digits", () => {
+  assert.equal(slugify("ﬁle １２３"), "file-123");
+  assert.equal(slugify("ﬂour"), "flour");
+  assert.equal(slugify("Ｈｅｌｌｏ"), "hello");
+});
+
 test("slugify with maxLength cuts the slug at a hyphen and never ends with a hyphen", () => {
   assert.equal(slugify("one two three", { maxLength: 9 }), "one-two");
   // The cut falls exactly before a hyphen.
