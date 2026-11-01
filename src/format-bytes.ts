@@ -1,9 +1,10 @@
 /**
- * Give a size in bytes in a form that a person can read.
+ * Give a size in whole bytes with the unit B.
+ * A fractional byte count rounds to the nearest byte.
  *
  * @param bytes - The size in bytes.
- * @returns The readable size.
+ * @returns The size in whole bytes, for example "512 B".
  */
 export function formatBytes(bytes: number): string {
-  return "";
+  return `${Math.round(bytes)} B`;
 }
