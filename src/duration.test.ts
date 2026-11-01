@@ -99,3 +99,24 @@ test("formatDuration refuses a negative number or a number that is not a finite 
   assert.equal(formatDuration(Number.MAX_SAFE_INTEGER), "104249991d 8h 59m");
   assert.equal(formatDuration(-0), "0s");
 });
+
+test("parseDuration(formatDuration(ms)) gives ms again for each whole second from 0 to 100000", () => {
+  const LAST_SECOND = 100_000;
+  const MS_PER_SECOND = 1_000;
+  let failure: string | undefined;
+  for (let second = 0; second <= LAST_SECOND; second += 1) {
+    const ms = second * MS_PER_SECOND;
+    const text = formatDuration(ms);
+    let result: number | string;
+    try {
+      result = parseDuration(text);
+    } catch (error) {
+      result = `threw ${String(error)}`;
+    }
+    if (result !== ms) {
+      failure = `ms ${ms}: formatDuration gave ${JSON.stringify(text)}, parseDuration gave ${String(result)}`;
+      break;
+    }
+  }
+  assert.equal(failure, undefined, failure);
+});
