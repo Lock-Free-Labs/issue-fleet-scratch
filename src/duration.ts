@@ -25,7 +25,8 @@ const SPACES_PATTERN = / */y;
 /**
  * Make the error for a text that is not a valid duration.
  *
- * @param text - The text that the function refused.
+ * @param text - The text that the function refused. It can also be a number in
+ * text form, such as `String(ms)`.
  * @param reason - A short reason that is true for the text.
  * @param ErrorType - The error class to make. The default is `SyntaxError`.
  * @returns An error of type `ErrorType` whose message names the text.
@@ -120,12 +121,22 @@ export function parseDuration(text: string): number {
  * second is dropped: the function truncates and does not round. Thus `1500`
  * gives `1s`, and `59999` gives `59s`. Zero gives `0s`. A value from 1 to 999
  * gives the `ms` unit only, such as `250ms`. The result for a number that is
- * not a safe non-negative integer is not defined yet.
+ * not a safe non-negative integer is refused. `-0` is accepted and gives `0s`.
  *
- * @param ms - The duration in milliseconds.
+ * @param ms - The duration in milliseconds. It must follow
+ * `Number.isSafeInteger(ms) && ms >= 0`.
  * @returns The duration text.
+ * @throws {RangeError} If `ms` is negative, is not an integer, is not finite,
+ * or is more than `Number.MAX_SAFE_INTEGER`. The message names the value and
+ * gives the reason.
  */
 export function formatDuration(ms: number): string {
+  if (!Number.isSafeInteger(ms)) {
+    throw invalidDuration(String(ms), "the value is not a safe integer", RangeError);
+  }
+  if (ms < 0) {
+    throw invalidDuration(String(ms), "the value is less than zero", RangeError);
+  }
   if (ms === 0) {
     return `0${SMALLEST_FORMAT_UNIT.name}`;
   }
