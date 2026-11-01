@@ -26,11 +26,18 @@ function roundForUnit(value: number, index: number): number {
  * A size that rounds up to 1024 of a unit moves to the next unit, for
  * example 1048575 B gives "1.0 MB".
  * YB is the largest unit, so a size of 1024 YB or more stays in YB.
+ * It refuses a negative or non-finite size.
  *
  * @param bytes - The size in bytes.
  * @returns The size with its unit, for example "512 B" or "1.5 MB".
+ * @throws {RangeError} When bytes is negative, NaN, or infinite.
  */
 export function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) {
+    throw new RangeError(
+      `formatBytes needs a finite size of 0 or more bytes, but got ${bytes}`,
+    );
+  }
   let value = bytes;
   let index = 0;
   while (roundForUnit(value, index) >= BASE && index < UNITS.length - 1) {
