@@ -74,7 +74,9 @@ export function slugify(text: string, options?: SlugifyOptions): string {
  */
 function truncate(slug: string, maxLength: number): string {
   if (Number.isNaN(maxLength) || maxLength < 0) {
-    throw new RangeError(`maxLength must be 0 or more, but it is ${maxLength}.`);
+    throw new RangeError(
+      `maxLength must be 0 or more, but it is ${maxLength}.`,
+    );
   }
   if (slug.length <= maxLength) {
     return slug;
