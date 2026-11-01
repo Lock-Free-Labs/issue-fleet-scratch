@@ -38,8 +38,9 @@ function characterReplacer(
  * The characters whose compatibility form (NFKD) does not suit a slug, and
  * the text that slugify writes in their place before NFKD.
  *
- * - NFKD changes "ŀ" to "l·" and "ŉ" to "ʼn", and the "·" and the "ʼ" would
- *   split the word. These letters become their base letter.
+ * - NFKD changes "ŀ" to "l·", "ŉ" to "ʼn" and "ẚ" to "aʾ", and the "·", the
+ *   "ʼ" and the "ʾ" would split the word. These letters become their base
+ *   letter.
  * - NFKD changes a trademark sign to letters, for example "™" to "TM", and
  *   they would join the word before the sign. A trademark sign becomes a
  *   separator, the same as "®" and "©", which have no compatibility form.
@@ -48,6 +49,7 @@ const COMPATIBILITY_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["Ŀ", "L"],
   ["ŀ", "l"],
   ["ŉ", "n"],
+  ["\u{1E9A}", "a"],
   ["™", SEPARATOR],
   ["℠", SEPARATOR],
   ["\u{1F16A}", SEPARATOR],
@@ -57,9 +59,14 @@ const COMPATIBILITY_OVERRIDES: ReadonlyMap<string, string> = new Map([
 
 /**
  * The ASCII letters of each lowercase Latin letter that has no
- * decomposition to `a`-`z`, for example "ø" and "ß". With {@link COMPATIBILITY_OVERRIDES} and NFKD, this map
- * brings each letter of Latin-1 Supplement and Latin Extended-A to `a`-`z`,
- * also inside a word.
+ * decomposition to `a`-`z`, for example "ø", "ß" and "ə". With
+ * {@link COMPATIBILITY_OVERRIDES} and NFKD, this map brings each Latin
+ * letter of Latin-1 Supplement, Latin Extended-A, Latin Extended-B and
+ * Latin Extended Additional to `a`-`z`, also inside a word.
+ *
+ * The tone letters, the clicks and the glottal stops of Latin Extended-B
+ * are not drawn from a letter and have no base letter. They are not in
+ * this map, thus they become a separator, the same as a punctuation mark.
  */
 const LETTER_FOLDS: ReadonlyMap<string, string> = new Map([
   ["æ", "ae"],
@@ -75,6 +82,76 @@ const LETTER_FOLDS: ReadonlyMap<string, string> = new Map([
   ["ŋ", "n"],
   ["œ", "oe"],
   ["ŧ", "t"],
+  ["ƀ", "b"],
+  ["ƃ", "b"],
+  ["ƈ", "c"],
+  ["ƌ", "d"],
+  ["ƍ", "d"],
+  ["ƒ", "f"],
+  ["ƕ", "hv"],
+  ["ƙ", "k"],
+  ["ƚ", "l"],
+  ["ƛ", "l"],
+  ["ƞ", "n"],
+  ["ƣ", "gh"],
+  ["ƥ", "p"],
+  ["ƪ", "sh"],
+  ["ƫ", "t"],
+  ["ƭ", "t"],
+  ["ƴ", "y"],
+  ["ƶ", "z"],
+  ["ƹ", "zh"],
+  ["ƺ", "zh"],
+  ["ƿ", "w"],
+  ["ǝ", "e"],
+  ["ǥ", "g"],
+  ["ȝ", "gh"],
+  ["ȡ", "d"],
+  ["ȣ", "ou"],
+  ["ȥ", "z"],
+  ["ȴ", "l"],
+  ["ȵ", "n"],
+  ["ȶ", "t"],
+  ["ȷ", "j"],
+  ["ȸ", "db"],
+  ["ȹ", "qp"],
+  ["ȼ", "c"],
+  ["ȿ", "s"],
+  ["ɀ", "z"],
+  ["ɇ", "e"],
+  ["ɉ", "j"],
+  ["ɋ", "q"],
+  ["ɍ", "r"],
+  ["ɏ", "y"],
+  ["ɓ", "b"],
+  ["ɔ", "o"],
+  ["ɖ", "d"],
+  ["ɗ", "d"],
+  ["ə", "e"],
+  ["ɛ", "e"],
+  ["ɠ", "g"],
+  ["ɣ", "g"],
+  ["ɨ", "i"],
+  ["ɩ", "i"],
+  ["ɯ", "m"],
+  ["ɲ", "n"],
+  ["ɵ", "o"],
+  ["ʀ", "r"],
+  ["ʃ", "sh"],
+  ["ʈ", "t"],
+  ["ʉ", "u"],
+  ["ʊ", "u"],
+  ["ʋ", "v"],
+  ["ʌ", "v"],
+  ["ʒ", "zh"],
+  ["ẜ", "s"],
+  ["ẝ", "s"],
+  ["ẟ", "d"],
+  ["ỻ", "ll"],
+  ["ỽ", "v"],
+  ["ỿ", "y"],
+  ["ⱥ", "a"],
+  ["ⱦ", "t"],
 ]);
 
 /** Replace each character of {@link COMPATIBILITY_OVERRIDES}. */
@@ -100,8 +177,8 @@ const EDGE_SEPARATOR = new RegExp(`^${SEPARATOR}|${SEPARATOR}$`, "g");
  *    the diacritics: "Crème" becomes "Creme", "ﬁ" becomes "fi", and
  *    "１" becomes "1".
  * 3. Make the text lowercase.
- * 4. Change each Latin letter that has no decomposition to its ASCII
- *    letters: "ø" becomes "o", and "ß" becomes "ss".
+ * 4. Change each letter of {@link LETTER_FOLDS} to its ASCII letters: "ø"
+ *    becomes "o", "ß" becomes "ss", and "ə" becomes "e".
  * 5. Replace each run of characters that are not `a`-`z` or `0`-`9` with
  *    one hyphen.
  * 6. Remove a hyphen at the start and at the end.
